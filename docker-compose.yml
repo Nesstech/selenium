@@ -1,35 +1,43 @@
-selenium-hub:
-  image: selenium/hub
-  container_name: 'selenium-hub'
-  ports:
-    - 4444:4444
+version: "3"
+services:
+  selenium-hub:
+    image: selenium/hub:4
+    container_name: 'selenium-hub'
+      - "4442:4442"
+      - "4443:4443"
+      - "4444:4444"
 
-chrome:
-  image: selenium/node-chrome-debug
-  container_name: 'chrome'
-  links:
-    - selenium-hub:hub
-  ports:
-    - 5900:5900
-  volumes:
-    - /dev/shm:/dev/shm
+  chrome:
+    image: selenium/node-chrome:4
+    container_name: 'chrome'
+    depends_on:
+      - selenium-hub
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+    ports:
+      - 5900:5900
+    shm_size: 2gb 
+    volumes:
+      - /dev/shm:/dev/shm
 
-#firefox:
-#  image: selenium/node-firefox-debug
-#  container_name: 'firefox'
-#  ports:
-#   - 5910:5900
-#  links:
-#    - selenium-hub:hub
+  #firefox:
+  #  image: selenium/node-firefox:4
+  #  container_name: 'firefox'
+  #  ports:
+  #   - 5910:5900
+  #  links:
+  #    - selenium-hub:hub
 
-python:
-  build: './python-selenium'
-  container_name: 'python'
-  links:
-    - selenium-hub:hub
-  command: 'tail -f /dev/null'
-  working_dir: '/root/script/'
-  volumes:
-    - ./script/:/root/script/
-  environment:
-    - 'TZ=Asia/Tokyo'
+  python:
+    build: './python-selenium'
+    container_name: 'python'
+    links:
+      - selenium-hub:hub
+    command: 'tail -f /dev/null'
+    working_dir: '/root/script/'
+    volumes:
+      - ./script/:/root/script/
+    environment:
+      - 'TZ=Asia/Tokyo'
